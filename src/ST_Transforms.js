@@ -176,6 +176,7 @@ module.exports = class Transforms {
                         return Characteristic.TargetHeatingCoolingState.COOL;
                     case "emergency heat":
                     case "heat":
+                        return Characteristic.TargetHeatingCoolingState.OFF;
                         return Characteristic.TargetHeatingCoolingState.HEAT;
                     case "auto":
                         return Characteristic.TargetHeatingCoolingState.AUTO;
@@ -334,7 +335,7 @@ module.exports = class Transforms {
             default:
                 {
                     const cool = devData.attributes.coolingSetpoint;
-                    const heat = devData.attributes.heatingSetpoint;
+                    const heat = devData.attributes.coolingSetpoint;
                     const cur = devData.attributes.temperature;
                     const cDiff = Math.abs(cool - cur);
                     const hDiff = Math.abs(heat - cur);
@@ -348,11 +349,11 @@ module.exports = class Transforms {
     }
 
     thermostatSupportedModes(devData) {
-        let hasHeatSetpoint = (devData.attributes.heatingSetpoint !== undefined || devData.attributes.heatingSetpoint !== null);
+        let hasHeatSetpoint = (devData.attributes.heatingSetpoint !== undefined || devData.attributes.coolingSetpoint !== null);
         let hasCoolSetpoint = (devData.attributes.coolingSetpoint !== undefined || devData.attributes.coolingSetpoint !== null);
         let sModes = devData.attributes.supportedThermostatModes || [];
         let validModes = [Characteristic.TargetHeatingCoolingState.OFF];
-        if ((sModes.length && sModes.includes("heat")) || sModes.includes("emergency heat") || hasHeatSetpoint)
+        if ((sModes.length && sModes.includes("heat")) || sModes.includes("emergency heat") || hasCoolSetpoint)
             validModes.push(Characteristic.TargetHeatingCoolingState.HEAT);
 
         if ((sModes.length && sModes.includes("cool")) || hasCoolSetpoint)
@@ -374,14 +375,14 @@ module.exports = class Transforms {
             case "emergency heat":
             case "heat":
                 cmdName = "setHeatingSetpoint";
-                attrName = "heatingSetpoint";
+                attrName = "coolingSetpoint";
                 break;
             default:
                 {
                     // This should only refer to auto
                     // Choose closest target as single target
                     const cool = devData.attributes.coolingSetpoint;
-                    const heat = devData.attributes.heatingSetpoint;
+                    const heat = devData.attributes.coolingSetpoint;
                     const cur = devData.attributes.temperature;
                     const cDiff = Math.abs(cool - cur);
                     const hDiff = Math.abs(heat - cur);
@@ -389,8 +390,8 @@ module.exports = class Transforms {
                     // console.log('(cool-cur):', cDiff);
                     // console.log('(heat-cur):', hDiff);
                     // console.log(`targerTemp(SET) | cool: ${cool} | heat: ${heat} | cur: ${cur} | useCool: ${useCool}`);
-                    cmdName = useCool ? "setCoolingSetpoint" : "setHeatingSetpoint";
-                    attrName = useCool ? "coolingSetpoint" : "heatingSetpoint";
+                    cmdName = useCool ? "setCoolingSetpoint" : "setCoolingSetpoint";
+                    attrName = useCool ? "coolingSetpoint" : "coolingSetpoint";
                 }
         }
         return {
